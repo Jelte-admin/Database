@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MySQL Data Viewer & User Add</title>
+  <style>
+    .active {
+      background-color: green;
+      color: white;
+    }
+  </style>
+  <script>
+    async function fetchData() {
+      const name = document.getElementById('nameInput').value;
+      const response = await fetch(`http://localhost:3000/data?name=${name}`);
+      const data = await response.json();
+      const output = document.getElementById('output');
+      output.innerHTML = JSON.stringify(data, null, 2);
+
+      if (data.length > 0) {
+        const user = data[0];
+        const statusButton = document.getElementById('statusButton');
+        statusButton.textContent = user.active ? 'Active' : 'Inactive';
+        statusButton.className = user.active ? 'active' : '';
+      }
+    }
+
+    // Event listener for adding a user
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('addUserForm').addEventListener('submit', async function(event) {
+        event.preventDefault();
+
+        const name = document.getElementById('name').value;
+        const email = document.getElementById('email').value;
+
+        try {
+          const response = await fetch('http://localhost:3000/add-user', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ name, email }),
+          });
+
+          if (response.ok) {
+            alert('User added successfully!');
+            document.getElementById('addUserForm').reset();
+          } else {
+            alert('Error adding user.');
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          alert('An error occurred while adding the user.');
+        }
+      });
+
+      // Event listener for toggling user status
+      document.getElementById('statusButton').addEventListener('click', async () => {
+        const name = document.getElementById('nameInput').value;
+
+        try {
+          const response = await fetch(`http://localhost:3000/toggle-status?name=${name}`);
+          const data = await response.json();
+
+          if (response.ok) {
+            fetchData(); // Refresh data to show updated status
+          } else {
+            alert(data.error || 'Error toggling status.');
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          alert('An error occurred while toggling status.');
+        }
+      });
+    });
+  </script>
+</head>
+<body>
+  <h1>MySQL Data Viewer & User Add</h1>
+
+  <!-- Data Viewer Section -->
+  <section>
+    <h2>View Data</h2>
+    <input type="text" id="nameInput" placeholder="Enter name">
+    <button onclick="fetchData()">Fetch Data</button>
+    <pre id="output"></pre>
+    <button id="statusButton">Toggle Status</button>
+  </section>
+
+  <!-- Add User Section -->
+  <section>
+    <h2>Add User</h2>
+    <form id="addUserForm">
+      <label for="name">Name:</label>
+      <input type="text" id="name" name="name" required>
+      <br>
+      <label for="email">Email:</label>
+      <input type="email" id="email" name="email" required>
+      <br>
+      <button type="submit">Add User</button>
+    </form>
+  </section>
+</body>
+</html>
